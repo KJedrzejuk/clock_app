@@ -11,6 +11,8 @@ from PyQt5.QtWidgets import QDialog, QApplication, QFileDialog
 from PyQt5.uic import loadUi
 from playsound import playsound
 
+# TODO: Nazwy klas CamelCase, nazwy funkcji oraz zmiennych minuskułą.
+
 
 class MainWindow(QDialog):
     def __init__(self):
@@ -29,6 +31,8 @@ class MainWindow(QDialog):
         self.RemainingRB.toggled.connect(self.time_remaining_toggled)
 
     def music_select(self):
+        # TODO: Można użyć metody `QFileDialog.getOpenFileName` pozwalającej na
+        #  stworzenie poniższego obiektu w jednej linii.
         file_dialog = QFileDialog(self)
         file_dialog.setFileMode(QFileDialog.ExistingFile)
         file_dialog.setWindowTitle("Wybierz plik")
@@ -101,7 +105,10 @@ class MainWindow(QDialog):
             if hour is not None or minute is not None:
                 self.start_b_change()
                 self.screen_time = (int(hour) * 60) + int(minute)
-                self.EkranLabel.setText(f"Budzik jest ustawiony na {int(hour):02d}:{int(minute):02d}")
+                self.EkranLabel.setText(
+                    "Budzik jest ustawiony na "
+                    f"{int(hour):02d}:{int(minute):02d}"
+                )
                 self.timer = QTimer()
                 self.timer.timeout.connect(self.alarm)
                 self.timer.start(1000)
@@ -140,6 +147,10 @@ class MainWindow(QDialog):
         self.HourLE.setEnabled(True)
         self.MinuteLE.setEnabled(True)
 
+    # TODO: Skompensować powyższe funkcje do jednej, pozwalającej na wykonanie
+    #  tych wszystkich operacji (np. funkcja do podpięcia akcji oraz
+    #  dostępność widżetów podawane w parametrach).
+
     def RB_check(self):
         if self.ClockRB.isChecked():
             self.StartB.clicked.connect(self.clock_time)
@@ -162,8 +173,11 @@ class MainWindow(QDialog):
             self.HourLE.setEnabled(True)
             self.MinuteLE.setEnabled(True)
 
+    # TODO: powyższego potwora może to też uda się jakoś uprościć.
+
     def alarm(self):
-        current_time = ((int(datetime.now().hour)) * 60) + int(datetime.now().minute)
+        current_time = ((int(datetime.now().hour)) * 60) + int(
+            datetime.now().minute)
         if self.screen_time == current_time:
             self.EkranLabel.setText(f"Nastała wybrana godzina ")
             self.stop_timer()
@@ -184,9 +198,15 @@ class MainWindow(QDialog):
             minuta = int(self.MinuteLE.text())
             wynik = ((godzina - godzina_teraz) * 60) + (minuta - minuta_teraz)
             if wynik >= 0:
-                self.EkranLabel.setText(f"Do podanej godziny zostało: {(wynik // 60):02d}:{(wynik % 60):02d} ")
+                self.EkranLabel.setText(
+                    "Do podanej godziny "
+                    f"zostało: {(wynik // 60):02d}:{(wynik % 60):02d} "
+                )
             else:
-                self.EkranLabel.setText(f"Do podanej godziny zostało: {(24 + (wynik // 60)):02d}:{(wynik % 60):02d} ")
+                self.EkranLabel.setText(
+                    "Do podanej godziny "
+                    f"zostało: {(24 + (wynik // 60)):02d}:{(wynik % 60):02d} "
+                )
 
     def check_time(self) -> Tuple[Optional[int], Optional[int]]:
         godzina = self.HourLE.text()
