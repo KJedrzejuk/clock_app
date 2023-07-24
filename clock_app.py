@@ -11,8 +11,6 @@ from PyQt5.QtWidgets import QDialog, QApplication, QFileDialog
 from PyQt5.uic import loadUi
 from playsound import playsound
 
-# TODO: Nazwy klas CamelCase, nazwy funkcji oraz zmiennych minuskułą.
-
 
 class MainWindow(QDialog):
     def __init__(self):
@@ -21,26 +19,19 @@ class MainWindow(QDialog):
         self.screen_time = 0
         self.sound_path = None
         self.MusicB.clicked.connect(self.music_select)
-        self.RB_check()
+        self.rb_check()
         self.ResetB.clicked.connect(self.reset)
         self.AnulujB.clicked.connect(self.stop_timer)
-        self.ClockRB.toggled.connect(self.clock_toggled)
-        self.TimerRB.toggled.connect(self.timer_toggled)
-        self.StopwatchRB.toggled.connect(self.stopwatch_toggled)
-        self.AlarmRB.toggled.connect(self.alarm_toggled)
-        self.RemainingRB.toggled.connect(self.time_remaining_toggled)
+        self.ClockRB.toggled.connect(lambda: self.connect_function(False, self.clock_time))
+        self.TimerRB.toggled.connect(lambda: self.connect_function(True, self.timer_time))
+        self.StopwatchRB.toggled.connect(lambda: self.connect_function(False, self.stopwatch_time))
+        self.AlarmRB.toggled.connect(lambda: self.connect_function(True, self.alarm_time))
+        self.RemainingRB.toggled.connect(lambda: self.connect_function(True, self.time_remaining))
 
     def music_select(self):
-        # TODO: Można użyć metody `QFileDialog.getOpenFileName` pozwalającej na
-        #  stworzenie poniższego obiektu w jednej linii.
-        file_dialog = QFileDialog(self)
-        file_dialog.setFileMode(QFileDialog.ExistingFile)
-        file_dialog.setWindowTitle("Wybierz plik")
-        file_dialog.setNameFilter("Pliki MP3 (*.mp3)")
-        if file_dialog.exec_():
-            selected_files = file_dialog.selectedFiles()
-            if selected_files:
-                self.sound_path = os.path.normpath(selected_files[0])
+        selected_files, _ = QFileDialog.getOpenFileName(self, "Wybierz plik", "", "Pliki MP3 (*.mp3)")
+        if selected_files:
+            self.sound_path = os.path.normpath(selected_files)
 
     def music_play(self) -> bool:
         if self.sound_path is None:
@@ -89,10 +80,10 @@ class MainWindow(QDialog):
     def timer_time(self):
         self.reset_time()
         if self.music_play():
-            minuta, sekunda = self.check_time()
-            if minuta is not None or sekunda is not None:
+            minute, seconds = self.check_time()
+            if minute is not None or seconds is not None:
                 self.start_b_change()
-                self.screen_time = (int(minuta) * 60) + int(sekunda)
+                self.screen_time = (int(minute) * 60) + int(seconds)
                 self.timer = QTimer(self)
                 self.timer.timeout.connect(self.timer_zegar)
                 self.timer.start(1000)
@@ -105,10 +96,7 @@ class MainWindow(QDialog):
             if hour is not None or minute is not None:
                 self.start_b_change()
                 self.screen_time = (int(hour) * 60) + int(minute)
-                self.EkranLabel.setText(
-                    "Budzik jest ustawiony na "
-                    f"{int(hour):02d}:{int(minute):02d}"
-                )
+                self.EkranLabel.setText(f"Budzik jest ustawiony na {int(hour):02d}:{int(minute):02d}")
                 self.timer = QTimer()
                 self.timer.timeout.connect(self.alarm)
                 self.timer.start(1000)
@@ -117,63 +105,31 @@ class MainWindow(QDialog):
         else:
             return
 
-    def clock_toggled(self):
+    def line_edit_status(self, status: bool):
+        self.HourLE.setEnabled(status)
+        self.MinuteLE.setEnabled(status)
+
+    def connect_function(self, set_status: bool, function_name: callable):
         self.StartB.clicked.disconnect()
-        self.StartB.clicked.connect(self.clock_time)
-        self.HourLE.setEnabled(False)
-        self.MinuteLE.setEnabled(False)
+        self.line_edit_status(set_status)
+        self.StartB.clicked.connect(function_name)
 
-    def timer_toggled(self):
-        self.StartB.clicked.disconnect()
-        self.StartB.clicked.connect(self.timer_time)
-        self.HourLE.setEnabled(True)
-        self.MinuteLE.setEnabled(True)
-
-    def stopwatch_toggled(self):
-        self.StartB.clicked.disconnect()
-        self.StartB.clicked.connect(self.stopwatch_time)
-        self.HourLE.setEnabled(False)
-        self.MinuteLE.setEnabled(False)
-
-    def alarm_toggled(self):
-        self.StartB.clicked.disconnect()
-        self.StartB.clicked.connect(self.alarm_time)
-        self.HourLE.setEnabled(True)
-        self.MinuteLE.setEnabled(True)
-
-    def time_remaining_toggled(self):
-        self.StartB.clicked.disconnect()
-        self.StartB.clicked.connect(self.time_remaining)
-        self.HourLE.setEnabled(True)
-        self.MinuteLE.setEnabled(True)
-
-    # TODO: Skompensować powyższe funkcje do jednej, pozwalającej na wykonanie
-    #  tych wszystkich operacji (np. funkcja do podpięcia akcji oraz
-    #  dostępność widżetów podawane w parametrach).
-
-    def RB_check(self):
+    def rb_check(self):
         if self.ClockRB.isChecked():
             self.StartB.clicked.connect(self.clock_time)
-            self.HourLE.setEnabled(False)
-            self.MinuteLE.setEnabled(False)
+            self.line_edit_status(False)
         if self.TimerRB.isChecked():
             self.StartB.clicked.connect(self.timer_time)
-            self.HourLE.setEnabled(False)
-            self.MinuteLE.setEnabled(False)
+            self.line_edit_status(False)
         if self.StopwatchRB.isChecked():
             self.StartB.clicked.connect(self.stopwatch_time)
-            self.HourLE.setEnabled(False)
-            self.MinuteLE.setEnabled(False)
+            self.line_edit_status(False)
         if self.AlarmRB.isChecked():
             self.StartB.clicked.connect(self.alarm_time)
-            self.HourLE.setEnabled(True)
-            self.MinuteLE.setEnabled(True)
+            self.line_edit_status(True)
         if self.RemainingRB.isChecked():
             self.StartB.clicked.connect(self.time_remaining)
-            self.HourLE.setEnabled(True)
-            self.MinuteLE.setEnabled(True)
-
-    # TODO: powyższego potwora może to też uda się jakoś uprościć.
+            self.line_edit_status(True)
 
     def alarm(self):
         current_time = ((int(datetime.now().hour)) * 60) + int(
@@ -188,35 +144,29 @@ class MainWindow(QDialog):
         self.EkranLabel.setText(current_time)
 
     def time_remaining(self):
-        godzina, minuta = self.check_time()
-        if godzina is None or minuta is None:
+        hour, minute = self.check_time()
+        if hour is None or minute is None:
             self.EkranLabel.setText("błedne dane")
         else:
-            godzina_teraz = datetime.now().hour
-            minuta_teraz = datetime.now().minute
-            godzina = int(self.HourLE.text())
-            minuta = int(self.MinuteLE.text())
-            wynik = ((godzina - godzina_teraz) * 60) + (minuta - minuta_teraz)
-            if wynik >= 0:
-                self.EkranLabel.setText(
-                    "Do podanej godziny "
-                    f"zostało: {(wynik // 60):02d}:{(wynik % 60):02d} "
-                )
+            hour_now = datetime.now().hour
+            minute_now = datetime.now().minute
+            hour = int(self.HourLE.text())
+            minute = int(self.MinuteLE.text())
+            result = ((hour - hour_now) * 60) + (minute - minute_now)
+            if result >= 0:
+                self.EkranLabel.setText(f"Do podanej godziny zostało: {(result // 60):02d}:{(result % 60):02d}")
             else:
-                self.EkranLabel.setText(
-                    "Do podanej godziny "
-                    f"zostało: {(24 + (wynik // 60)):02d}:{(wynik % 60):02d} "
-                )
+                self.EkranLabel.setText(f"Do podanej godziny zostało: {(24 + (result // 60)):02d}:{(result % 60):02d}")
 
     def check_time(self) -> Tuple[Optional[int], Optional[int]]:
-        godzina = self.HourLE.text()
-        minuta = self.MinuteLE.text()
-        if godzina.isdigit() and minuta.isdigit():
-            if 0 <= int(godzina) < 24 and 0 <= int(minuta) < 60:
-                return godzina, minuta
-        godzina, minuta = None, None
+        hour = self.HourLE.text()
+        minute = self.MinuteLE.text()
+        if hour.isdigit() and minute.isdigit():
+            if 0 <= int(hour) < 24 and 0 <= int(minute) < 60:
+                return hour, minute
+        hour, minute = None, None
         self.EkranLabel.setText(f"Podano błędne wartości ")
-        return godzina, minuta
+        return hour, minute
 
     def stopwatch(self):
         self.screen_time += 1
